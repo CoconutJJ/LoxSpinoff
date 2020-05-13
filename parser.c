@@ -74,6 +74,40 @@ int matchToken(TOKEN **curr, LITERAL t)
     return 0;
 }
 
+OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN **), LITERAL t[], int literal_sz)
+{
+    OP *left = leftParse(curr);
+
+    TOKEN *curr_token = *curr;
+    OP *root = left;
+
+    int has_token = 0;
+
+    while (1)
+    {
+
+        for (int i = 0; i < literal_sz; i++)
+        {
+            if (matchToken(curr, t[i]))
+            {
+                has_token = 1;
+                break;
+            }
+        }
+
+        if (!has_token)
+            break;
+
+        has_token = 0;
+        root = createBinaryOp(curr_token->t);
+        root->left = left;
+        root->right = rightParse(curr);
+        left = root;
+    }
+
+    return root;
+}
+
 OP *parsePrimary(TOKEN **curr)
 {
     OP *leaf;
@@ -144,117 +178,32 @@ OP *parseUnary(TOKEN **curr)
 
 OP *parseProducts(TOKEN **curr)
 {
-    OP *left = parseProducts(curr);
-    OP *root = left;
-
-    TOKEN *curr_token = *curr;
-
-    while (1)
-    {
-        if (!(
-                matchToken(curr, PLUS) || matchToken(curr, MINUS)))
-            break;
-
-        root = createBinaryOp(curr_token->t);
-        root->left = left;
-        root->right = parseProducts(curr);
-        left = root;
-    }
-    return root;
+    LITERAL t[] = {DIVIDE, MULTIPLY};
+    return parseBinOp(curr, parseUnary, parseUnary, t, 2);
 }
 
 OP *parseSums(TOKEN **curr)
 {
-    OP *left = parseProducts(curr);
-    OP *root = left;
-
-    TOKEN *curr_token = *curr;
-
-    while (1)
-    {
-        if (!(
-                matchToken(curr, PLUS) || matchToken(curr, MINUS)))
-            break;
-
-        root = createBinaryOp(curr_token->t);
-        root->left = left;
-        root->right = parseProducts(curr);
-        left = root;
-    }
-    return root;
+    LITERAL t[] = {PLUS, MINUS};
+    return parseBinOp(curr, parseProducts, parseProducts, t, 2);
 }
 
 OP *parseComparison(TOKEN **curr)
 {
-    OP *left = parseSums(curr);
-    OP *root = left;
-
-    TOKEN *curr_token = *curr;
-
-    while (1)
-    {
-
-        if (!(
-                matchToken(curr, GREATER_THAN) || matchToken(curr, GREATER_THAN_EQUAL) || matchToken(curr, LESS_THAN) || matchToken(curr, LESS_THAN_EQUAL)))
-            break;
-
-        root = createBinaryOp(curr_token->t);
-
-        root->left = left;
-        root->right = parseSums(curr);
-        left = root;
-    }
-
-    return root;
+    LITERAL t[] = {GREATER_THAN, GREATER_THAN_EQUAL, LESS_THAN, LESS_THAN_EQUAL};
+    return parseBinOp(curr, parseSums, parseSums, t, 4);
 }
 
 OP *parseEquality(TOKEN **curr)
 {
-
-    OP *left = parseComparison(curr);
-
-    TOKEN *curr_token = *curr;
-    OP *root = left;
-
-    while (1)
-    {
-
-        if (!matchToken(curr, EQUAL_EQUAL) && !matchToken(curr, BANG_EQUAL))
-            break;
-
-        root = createBinaryOp(curr_token->t);
-        root->left = left;
-        root->right = parseComparison(curr);
-        left = root;
-    }
-
-    return root;
+    LITERAL t[] = {EQUAL_EQUAL, BANG_EQUAL};
+    return parseBinOp(curr, parseComparison, parseComparison, t, 2);
 }
 
 OP *parseLogic(TOKEN **curr)
 {
-
-    OP *left = parseEquality(curr);
-
-    TOKEN *curr_token = *curr;
-
-    OP *root = left;
-
-    while (1)
-    {
-        if (!(matchToken(curr, AND) || matchToken(curr, OR)))
-            break;
-
-        root = createBinaryOp(curr_token->t);
-
-        root->left = left;
-
-        root->right = parseEquality(curr);
-
-        left = root;
-    }
-
-    return root;
+    LITERAL t[] = {AND, OR};
+    return parseBinOp(curr, parseEquality, parseEquality, t, 2);
 }
 
 OP *parse(TOKEN **tokenList)

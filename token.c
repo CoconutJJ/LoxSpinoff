@@ -3,11 +3,17 @@
 #include <string.h>
 #include "types.h"
 
-#define MAX_VARIABLE_NAME_LEN 25
 
+/**
+ *  Linked List of Tokens
+ */
 TOKEN *token_list = NULL;
 TOKEN *token_end = NULL;
 
+
+/**
+ * Log error and line to stderr and exit.
+ */
 void raise(char *error, int line)
 {
 
@@ -39,6 +45,10 @@ int nstrcp(char *dest, char *src, int str_len)
     return init - str_len;
 }
 
+/**
+ *  Adds a token to the linked list. Pass NULL for value if no value is needed.
+ *
+ */
 void add_token(LITERAL t, char *value)
 {
 
@@ -63,12 +73,22 @@ void add_token(LITERAL t, char *value)
         token_end = new_token;
     }
 }
+
+/**
+ *  Peek at the token after current
+ */
 char peek(char *code, int *current)
 {
 
     return code[(*current) + 1];
 }
 
+/**
+ *  If the characters after current match with c, advance the current up to the
+ *  last matching character
+ *
+ *  Returns 1 if valid match, 0 otherwise
+ */
 int matchChar(char *code, int *current, char *c)
 {
     int initial = *current;
@@ -80,6 +100,7 @@ int matchChar(char *code, int *current, char *c)
         if (*c != *s)
         {
             *current = initial;
+            return 0;
         }
 
         (*current)++;
@@ -88,44 +109,28 @@ int matchChar(char *code, int *current, char *c)
     }
 
     (*current)--;
+    return 1;
 }
 
+/**
+ * Returns 1 if c is a character from A-Z case insensitive.
+ */
 int isAlpha(char c)
 {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
+/**
+ *  Returns 1 if c is chracter from 0-9
+ */
 int isNum(char c)
 {
     return (c >= '0' && c <= '9');
 }
 
-int variable(char *code, int *current)
-{
-    char name[MAX_VARIABLE_NAME_LEN + 1] = "\0";
-
-    int curr_index = 0;
-
-    while (isAlpha(code[*current]))
-    {
-
-        if (curr_index == MAX_VARIABLE_NAME_LEN)
-        {
-            return 0;
-        }
-
-        name[curr_index] = code[*current];
-
-        curr_index++;
-        (*current)++;
-    }
-    name[curr_index] = '\0';
-
-    add_token(VAR, name);
-
-    return 1;
-}
-
+/**
+ * Tokenize a string.
+ */
 int string(char *code, int *current)
 {
     int str_len = 0;
@@ -149,7 +154,9 @@ int string(char *code, int *current)
 
     return 1;
 }
-
+/**
+ *  Tokenize a number
+ */
 int number(char *code, int *current)
 {
 
@@ -191,6 +198,9 @@ int number(char *code, int *current)
     return 1;
 }
 
+/**
+ *  Returns the keyword literal if identifier is a keyword. Returns -1 otherwise
+ */
 LITERAL matchIdentifier(char *identifier)
 {
 
@@ -248,6 +258,9 @@ LITERAL matchIdentifier(char *identifier)
     return -1;
 }
 
+/**
+ *  Parse the identifier.
+ */
 int identifier(char *code, int *current)
 {
     char *start = &(code[*current]);
@@ -272,6 +285,9 @@ int identifier(char *code, int *current)
     add_token(((int)t < 0) ? IDENTIFIER : t, id);
 }
 
+/**
+ * Tokenize the code.
+ */
 void tokenize(char *code)
 {
 
@@ -305,10 +321,10 @@ void tokenize(char *code)
             current++;
             break;
         case '/':
-
+            // if we match another '/', then we have a comment.
             if (matchChar(code, &current, "/"))
             {
-
+                // skip
                 while (peek(code, &current) != '\n' && peek(code, &current) != '\0')
                     current++;
 
