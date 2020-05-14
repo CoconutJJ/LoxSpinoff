@@ -27,6 +27,6 @@ OP *parseEquality(TOKEN **curr);
 
 OP *parseLogic(TOKEN **curr);
 
-OP *parse(TOKEN *tokenList);
+OP *parse(TOKEN **tokenList);
 
 #endif

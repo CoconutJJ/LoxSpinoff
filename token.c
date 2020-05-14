@@ -261,7 +261,7 @@ LITERAL matchIdentifier(char *identifier)
 /**
  *  Parse the identifier.
  */
-int identifier(char *code, int *current)
+void identifier(char *code, int *current)
 {
     char *start = &(code[*current]);
     char *end = start;
@@ -288,7 +288,7 @@ int identifier(char *code, int *current)
 /**
  * Tokenize the code.
  */
-void tokenize(char *code)
+TOKEN * tokenize(char *code)
 {
 
     int current = 0, line = 1;
@@ -327,7 +327,8 @@ void tokenize(char *code)
                 // skip
                 while (peek(code, &current) != '\n' && peek(code, &current) != '\0')
                     current++;
-
+                
+                current++;
                 continue;
             }
 
@@ -423,4 +424,8 @@ void tokenize(char *code)
             break;
         }
     }
+    TOKEN * l = token_list;
+    token_list = NULL;
+    token_end = NULL;
+    return l;
 }

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "types.h"
 
-OP *parse(TOKEN **tokenList);
+OP *parseLogic(TOKEN **tokenList);
 
 void panic(TOKEN **curr)
 {
@@ -66,6 +66,9 @@ OP *createLiteral(LITERAL lit)
 int matchToken(TOKEN **curr, LITERAL t)
 {
 
+    if (!(*curr))
+        return 0;
+
     if ((*curr)->t == t)
     {
         *curr = (*curr)->next;
@@ -73,10 +76,19 @@ int matchToken(TOKEN **curr, LITERAL t)
     }
     return 0;
 }
-
+/**
+ *  Parses a binary operator that calls leftParse of the left operand and
+ *  rightParse on the right operand.
+ */
 OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN **), LITERAL t[], int literal_sz)
 {
     OP *left = leftParse(curr);
+
+    if (!left)
+    {
+        fprintf(stderr, "Invalid expression");
+        exit(EXIT_FAILURE);
+    }
 
     TOKEN *curr_token = *curr;
     OP *root = left;
@@ -85,7 +97,7 @@ OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN
 
     while (1)
     {
-
+        // ensure at least 1 token matches
         for (int i = 0; i < literal_sz; i++)
         {
             if (matchToken(curr, t[i]))
@@ -102,6 +114,11 @@ OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN
         root = createBinaryOp(curr_token->t);
         root->left = left;
         root->right = rightParse(curr);
+        if (!root->right)
+        {
+            fprintf(stderr, "Invalid expression");
+            exit(EXIT_FAILURE);
+        }
         left = root;
     }
 
@@ -110,6 +127,8 @@ OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN
 
 OP *parsePrimary(TOKEN **curr)
 {
+    if (!(*curr)) return NULL;
+
     OP *leaf;
     TOKEN *curr_token = (*curr);
 
@@ -145,7 +164,7 @@ OP *parsePrimary(TOKEN **curr)
 
     if (matchToken(curr, OPENPAREN))
     {
-        OP *body = parse(curr);
+        OP *body = parseLogic(curr);
 
         if (!matchToken(curr, CLOSEPAREN))
         {
@@ -161,13 +180,15 @@ OP *parsePrimary(TOKEN **curr)
 
 OP *parseUnary(TOKEN **curr)
 {
-
+    if (!(*curr))
+        return NULL;
+    TOKEN * curr_token = *curr;
     if (matchToken(curr, NOT) || matchToken(curr, MINUS))
     {
 
         OP *body = parseUnary(curr);
 
-        OP *root = createUnaryOp((*curr)->t);
+        OP *root = createUnaryOp(curr_token->t);
         root->next = body;
 
         return root;
@@ -209,5 +230,12 @@ OP *parseLogic(TOKEN **curr)
 OP *parse(TOKEN **tokenList)
 {
 
-    TOKEN *curr = *tokenList;
+    OP * tree = parseLogic(tokenList);
+
+    if (*tokenList) {
+        fprintf(stderr, "Invalid Expression");
+        exit(EXIT_FAILURE);
+    }
+
+    return tree;
 }

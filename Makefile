@@ -1,13 +1,15 @@
-all: clean
+GCC= gcc -g -Wall
+
+all: main clean
 
 main: parser.o token.o
-	gcc -Wall main.c parser.o token.o -o interp
+	$(GCC) main.c parser.o token.o -o interp
 
-parser: parser.c
-	gcc -Wall -c parser.c
+parser.o: parser.c
+	$(GCC) -c parser.c
 
-token: token.c
-	gcc -Wall -c token.c
+token.o: token.c
+	$(GCC) -c token.c
 
 .PHONY: clean
 
