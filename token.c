@@ -10,6 +10,8 @@
 TOKEN *token_list = NULL;
 TOKEN *token_end = NULL;
 
+int line = 1;
+
 
 /**
  * Log error and line to stderr and exit.
@@ -56,7 +58,7 @@ void add_token(LITERAL t, char *value)
 
     new_token->t = t;
     new_token->next = NULL;
-
+    new_token->line = line;
     if (value)
     {
         strcpy(new_token->value, value);
@@ -291,7 +293,7 @@ void identifier(char *code, int *current)
 TOKEN * tokenize(char *code)
 {
 
-    int current = 0, line = 1;
+    int current = 0;
     char c;
 
     while (1)
@@ -427,5 +429,6 @@ TOKEN * tokenize(char *code)
     TOKEN * l = token_list;
     token_list = NULL;
     token_end = NULL;
+    line = 1;
     return l;
 }

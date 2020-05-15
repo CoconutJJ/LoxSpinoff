@@ -55,9 +55,9 @@ typedef enum child_type
 
 typedef struct __token
 {
-
-    LITERAL t;
     TOKEN *next;
+    LITERAL t;
+    int line;
     char value[];
 
 } TOKEN;
@@ -67,14 +67,17 @@ typedef struct __op
 
     LITERAL op;
     CHILD_T type;
-    union {
+    int line;
+    union
+    {
         struct
         {
             OP *left;
             OP *right;
         };
         OP *next;
-        struct {
+        struct
+        {
             int i_literal;
             float f_literal;
         };
@@ -82,13 +85,15 @@ typedef struct __op
 
 } OP;
 
-typedef struct __literal_node
+typedef struct __eval
 {
+    LITERAL op;
+    union
+    {
+        int i_literal;
+        float f_literal;
+    };
 
-    LITERAL literal;
-    int il;
-    float fl;
-
-} LITERAL_NODE;
+} EVAL;
 
 #endif

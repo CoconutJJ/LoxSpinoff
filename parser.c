@@ -2,13 +2,22 @@
 #include <stdlib.h>
 #include "types.h"
 
-OP *parseLogic(TOKEN **tokenList);
+OP *parseOR(TOKEN **tokenList);
 
-void panic(TOKEN **curr)
+void panic(TOKEN **curr, char *msg)
 {
 
     TOKEN *curr_token = *curr;
 
+    if (!curr_token)
+    {
+        fprintf(stderr, "last line: %s", msg);
+    }
+    else
+    {
+
+        fprintf(stderr, "line %d: %s", curr_token->line, msg);
+    }
     while (curr_token)
     {
 
@@ -23,14 +32,22 @@ void panic(TOKEN **curr)
             break;
         default:
             curr_token = curr_token->next;
+            *curr = curr_token;
             break;
         }
     }
 
-    *curr = curr_token;
+    exit(EXIT_FAILURE);
 }
 
-OP *createBinaryOp(LITERAL bin_op)
+void error(TOKEN **curr, char *msg)
+{
+
+    fprintf(stderr, "line %d: %s", (*curr)->line, msg);
+    exit(EXIT_FAILURE);
+}
+
+OP *createBinaryOp(LITERAL bin_op, int line)
 {
     OP *new_op = malloc(sizeof(OP));
     new_op->type = BIN;
@@ -40,7 +57,7 @@ OP *createBinaryOp(LITERAL bin_op)
     return new_op;
 }
 
-OP *createUnaryOp(LITERAL un_op)
+OP *createUnaryOp(LITERAL un_op, int line)
 {
     OP *new_op = malloc(sizeof(OP));
     new_op->type = UNI;
@@ -50,7 +67,7 @@ OP *createUnaryOp(LITERAL un_op)
     return new_op;
 }
 
-OP *createLiteral(LITERAL lit)
+OP *createLiteral(LITERAL lit, int line)
 {
 
     OP *new_op = malloc(sizeof(OP));
@@ -82,12 +99,11 @@ int matchToken(TOKEN **curr, LITERAL t)
  */
 OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN **), LITERAL t[], int literal_sz)
 {
-    OP *left = leftParse(curr);
+    OP *left = leftParse(curr); // 5
 
     if (!left)
     {
-        fprintf(stderr, "Invalid expression");
-        exit(EXIT_FAILURE);
+        panic(curr, "Invalid Expression");
     }
 
     TOKEN *curr_token = *curr;
@@ -95,11 +111,13 @@ OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN
 
     int has_token = 0;
 
-    while (1)
+    while (*curr)
     {
+
         // ensure at least 1 token matches
         for (int i = 0; i < literal_sz; i++)
         {
+            curr_token = *curr;
             if (matchToken(curr, t[i]))
             {
                 has_token = 1;
@@ -111,13 +129,12 @@ OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN
             break;
 
         has_token = 0;
-        root = createBinaryOp(curr_token->t);
+        root = createBinaryOp(curr_token->t, curr_token->line); // -
         root->left = left;
         root->right = rightParse(curr);
         if (!root->right)
         {
-            fprintf(stderr, "Invalid expression");
-            exit(EXIT_FAILURE);
+            panic(curr, "Invalid expression");
         }
         left = root;
     }
@@ -127,20 +144,21 @@ OP *parseBinOp(TOKEN **curr, OP *(*leftParse)(TOKEN **), OP *(*rightParse)(TOKEN
 
 OP *parsePrimary(TOKEN **curr)
 {
-    if (!(*curr)) return NULL;
+    if (!(*curr))
+        return NULL;
 
     OP *leaf;
     TOKEN *curr_token = (*curr);
 
     if (matchToken(curr, FALSE) || matchToken(curr, TRUE))
     {
-        leaf = createLiteral(curr_token->t);
+        leaf = createLiteral(curr_token->t, curr_token->line);
         return leaf;
     }
 
     if (matchToken(curr, INT))
     {
-        leaf = createLiteral(INT);
+        leaf = createLiteral(INT, curr_token->line);
 
         leaf->i_literal = strtol(curr_token->value, NULL, 10);
 
@@ -149,7 +167,7 @@ OP *parsePrimary(TOKEN **curr)
 
     if (matchToken(curr, FLOAT))
     {
-        leaf = createLiteral(FLOAT);
+        leaf = createLiteral(FLOAT, curr_token->line);
 
         leaf->f_literal = strtof(curr_token->value, NULL);
 
@@ -158,18 +176,17 @@ OP *parsePrimary(TOKEN **curr)
 
     if (matchToken(curr, NIL))
     {
-        leaf = createLiteral(NIL);
+        leaf = createLiteral(NIL, curr_token->line);
         return leaf;
     }
 
     if (matchToken(curr, OPENPAREN))
     {
-        OP *body = parseLogic(curr);
+        OP *body = parseOR(curr);
 
         if (!matchToken(curr, CLOSEPAREN))
         {
-            fprintf(stderr, "Expected ')' after expression");
-            exit(EXIT_FAILURE);
+            panic(curr, "Expected ')' after expression");
         }
 
         return body;
@@ -182,13 +199,13 @@ OP *parseUnary(TOKEN **curr)
 {
     if (!(*curr))
         return NULL;
-    TOKEN * curr_token = *curr;
+    TOKEN *curr_token = *curr;
     if (matchToken(curr, NOT) || matchToken(curr, MINUS))
     {
 
         OP *body = parseUnary(curr);
 
-        OP *root = createUnaryOp(curr_token->t);
+        OP *root = createUnaryOp(curr_token->t, curr_token->line);
         root->next = body;
 
         return root;
@@ -221,20 +238,26 @@ OP *parseEquality(TOKEN **curr)
     return parseBinOp(curr, parseComparison, parseComparison, t, 2);
 }
 
-OP *parseLogic(TOKEN **curr)
+OP *parseAND(TOKEN **curr)
 {
-    LITERAL t[] = {AND, OR};
+    LITERAL t[] = {AND};
     return parseBinOp(curr, parseEquality, parseEquality, t, 2);
+}
+
+OP *parseOR(TOKEN **curr)
+{
+    LITERAL t[] = {OR};
+    return parseBinOp(curr, parseAND, parseAND, t, 2);
 }
 
 OP *parse(TOKEN **tokenList)
 {
 
-    OP * tree = parseLogic(tokenList);
+    OP *tree = parseOR(tokenList);
 
-    if (*tokenList) {
-        fprintf(stderr, "Invalid Expression");
-        exit(EXIT_FAILURE);
+    if (*tokenList)
+    {
+        error(tokenList, "Invalid Expression");
     }
 
     return tree;
