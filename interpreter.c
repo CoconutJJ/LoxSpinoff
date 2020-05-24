@@ -34,8 +34,6 @@ int isTruthy(EVAL p)
 
 int isLess(EVAL l, EVAL r)
 {
-    if (l.op != r.op)
-        return 0;
 
     switch (l.op)
     {
@@ -46,8 +44,9 @@ int isLess(EVAL l, EVAL r)
         return l.f_literal < r.f_literal;
         break;
     case TRUE:
-    case FALSE:
         return 0;
+    case FALSE:
+        return 1 && (l.op != r.op);
 
     default:
         return -1;
@@ -57,9 +56,6 @@ int isLess(EVAL l, EVAL r)
 
 int isGreater(EVAL l, EVAL r)
 {
-    if (l.op != r.op)
-        return 0;
-
     switch (l.op)
     {
     case INT:
@@ -69,12 +65,14 @@ int isGreater(EVAL l, EVAL r)
         return l.f_literal > r.f_literal;
         break;
     case TRUE:
+        return 1 && (l.op != r.op);
+
     case FALSE:
         return 0;
 
     default:
         return -1;
-        break;
+
     }
 }
 
@@ -101,6 +99,7 @@ int isEqual(EVAL l, EVAL r)
         break;
     }
 }
+
 
 EVAL evaluateExpr(OP *parseTree)
 {
@@ -148,7 +147,7 @@ EVAL evaluateExpr(OP *parseTree)
                 p.f_literal = (float)0.0 - (body.f_literal);
             }
             break;
-
+        break;
         default:
             break;
         }

@@ -2,31 +2,15 @@
 #define PARSER_H
 
 #include "types.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_utils.h"
 
-void panic(TOKEN **curr);
+OP *printStatement(TOKEN **curr);
 
-OP *createBinaryOp(LITERAL bin_op);
+OP *expressionStatement(TOKEN **curr);
 
-OP *createUnaryOp(LITERAL un_op);
+OP *parseStatement(TOKEN **curr);
 
-OP *createLiteral(LITERAL lit);
-
-int matchToken(TOKEN **curr, LITERAL t);
-
-OP *parsePrimary(TOKEN **curr);
-
-OP *parseUnary(TOKEN **curr);
-
-OP *parseProducts(TOKEN **curr);
-
-OP *parseSums(TOKEN **curr);
-
-OP *parseComparison(TOKEN **curr);
-
-OP *parseEquality(TOKEN **curr);
-
-OP *parseLogic(TOKEN **curr);
-
-OP *parse(TOKEN **tokenList);
+OP **parse(TOKEN **list);
 
 #endif

@@ -44,6 +44,14 @@ typedef enum literals
 
 } LITERAL;
 
+typedef enum stmt_t {
+
+    PRINT_STMT,
+    
+
+} STATEMENT_TYPE;
+
+
 typedef enum child_type
 {
 
@@ -53,6 +61,9 @@ typedef enum child_type
 
 } CHILD_T;
 
+/**
+ * Tokens
+ */
 typedef struct __token
 {
     TOKEN *next;
@@ -62,12 +73,42 @@ typedef struct __token
 
 } TOKEN;
 
+
+typedef struct __stmt {
+
+    OP * tree;
+} STATEMENT;
+
+
+/**
+ * Parse Tree node
+ */
 typedef struct __op
 {
 
     LITERAL op;
+
+    /**
+     * Define the literal type
+     * 
+     * BIN - binary operator
+     * UNI - unary operator
+     * LIT - literal
+     * 
+     */
     CHILD_T type;
+
+    /**
+     * Line number in user file where literal occurred.
+     */
     int line;
+
+    /**
+     * Only 1 of 3 possible fields should be used, hence the union
+     * For Binary operators use the *left and *right struct.
+     * For Unary operators use the *next pointer
+     * For Numbers/Strings use the i_literal, f_literal struct.
+     */
     union
     {
         struct

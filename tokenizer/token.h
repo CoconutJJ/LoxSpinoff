@@ -1,6 +1,6 @@
 #ifndef TOKEN_H
 #define TOKEN_H
-#include "types.h"
+#include "../types.h"
 
 /**
  * Log error and line to stderr and exit.

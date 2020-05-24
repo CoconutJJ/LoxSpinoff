@@ -1,36 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "token.h"
+#include "tokenizer/token.h"
 #include "parser.h"
 #include "types.h"
 #include "interpreter.h"
 void interpret(char * code) {
-
-    TOKEN * tokens = tokenize(code);
-
-    OP * parseTree = parse(&tokens);
-
-    EVAL p = evaluateExpr(parseTree);
-    
-
-    switch (p.op)
-    {
-    case TRUE:
-        printf("TRUE");
-        break;
-    case FALSE:
-        printf("FALSE");
-        break;
-    case INT:
-        printf("%d", p.i_literal);
-        break;
-    case FLOAT:
-        printf("%f", p.f_literal);
-        break;
-    default:
-        break;
-    }
-    
 
     return;
 }
@@ -81,9 +55,4 @@ int main(int argc, char** argv) {
         }
 
     }
-
-
-
-
-
 }

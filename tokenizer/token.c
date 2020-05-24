@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
-
+#include "../types.h"
 
 /**
  *  Linked List of Tokens
@@ -11,7 +10,6 @@ TOKEN *token_list = NULL;
 TOKEN *token_end = NULL;
 
 int line = 1;
-
 
 /**
  * Log error and line to stderr and exit.
@@ -242,6 +240,11 @@ LITERAL matchIdentifier(char *identifier)
         return VAR;
     }
 
+    if (strcmp(identifier, "print") == 0)
+    {
+        return PRINT;
+    }
+
     if (strcmp(identifier, "TRUE") == 0)
     {
         return TRUE;
@@ -290,7 +293,7 @@ void identifier(char *code, int *current)
 /**
  * Tokenize the code.
  */
-TOKEN * tokenize(char *code)
+TOKEN *tokenize(char *code)
 {
 
     int current = 0;
@@ -329,7 +332,7 @@ TOKEN * tokenize(char *code)
                 // skip
                 while (peek(code, &current) != '\n' && peek(code, &current) != '\0')
                     current++;
-                
+
                 current++;
                 continue;
             }
@@ -426,7 +429,7 @@ TOKEN * tokenize(char *code)
             break;
         }
     }
-    TOKEN * l = token_list;
+    TOKEN *l = token_list;
     token_list = NULL;
     token_end = NULL;
     line = 1;
